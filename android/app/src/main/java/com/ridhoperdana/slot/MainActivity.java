@@ -103,7 +103,8 @@ public final class MainActivity extends Activity {
             String title = shelf.selected().title;
             textCentered(canvas, title, 360, 357, 20, Color.WHITE, true);
             textCentered(canvas, p.name(), 360, 382, 13, 0xfff2c14e, true);
-            textCentered(canvas, "No ROMs found — choose a folder to add games", 360, 410, 11, 0xffd7d7df, false);
+            String hint = shelf.games().isEmpty() ? "No ROMs found — choose a folder to add games" : "Swipe to browse • Tap the cart to launch";
+            textCentered(canvas, hint, 360, 410, 11, 0xffd7d7df, false);
         }
 
         private void drawFooter(Canvas canvas) {
@@ -155,7 +156,7 @@ public final class MainActivity extends Activity {
 
         private void addFolder(Uri tree) {
             List<ShelfModel.Game> found = new ArrayList<>();
-            scanFolder(tree, found);
+            scanFolder(tree, DocumentsContract.getTreeDocumentId(tree), found);
             if (!found.isEmpty()) {
                 shelf.replaceGames(found);
                 Toast.makeText(MainActivity.this, found.size() + " game(s) added", Toast.LENGTH_SHORT).show();
@@ -165,9 +166,9 @@ public final class MainActivity extends Activity {
             invalidate();
         }
 
-        private void scanFolder(Uri tree, List<ShelfModel.Game> found) {
+        private void scanFolder(Uri tree, String documentId, List<ShelfModel.Game> found) {
             ContentResolver resolver = getContentResolver();
-            Uri children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree));
+            Uri children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, documentId);
             String[] columns = { DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_DISPLAY_NAME, DocumentsContract.Document.COLUMN_MIME_TYPE };
             try (Cursor cursor = resolver.query(children, columns, null, null, null)) {
                 if (cursor == null) return;
@@ -176,7 +177,7 @@ public final class MainActivity extends Activity {
                     String name = cursor.getString(1);
                     String mime = cursor.getString(2);
                     Uri child = DocumentsContract.buildDocumentUriUsingTree(tree, id);
-                    if (DocumentsContract.Document.MIME_TYPE_DIR.equals(mime)) scanFolder(child, found);
+                    if (DocumentsContract.Document.MIME_TYPE_DIR.equals(mime)) scanFolder(tree, id, found);
                     else {
                         String lower = name.toLowerCase(Locale.ROOT);
                         ShelfModel.Platform p = lower.endsWith(".gba") ? ShelfModel.Platform.GBA : lower.endsWith(".gbc") ? ShelfModel.Platform.GBC : lower.endsWith(".gb") ? ShelfModel.Platform.GB : null;
