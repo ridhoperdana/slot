@@ -39,8 +39,19 @@ public final class ShelfModel {
 
     public List<Game> games() { return Collections.unmodifiableList(games); }
     public Platform platform() { return platform; }
-    public Game selected() { return games.get(index); }
+    public Game selected() {
+        List<Game> visible = visibleGames();
+        return visible.isEmpty()
+                ? new Game("No games found", platform, "", platform == Platform.GB ? "Gambatte" : "mGBA")
+                : visible.get(index);
+    }
     public int index() { return index; }
+
+    private List<Game> visibleGames() {
+        List<Game> visible = new ArrayList<>();
+        for (Game game : games) if (game.platform == platform) visible.add(game);
+        return visible;
+    }
 
     public void replaceGames(List<Game> replacement) {
         games.clear();
@@ -48,8 +59,14 @@ public final class ShelfModel {
         index = 0;
     }
 
-    public void next() { if (!games.isEmpty()) index = (index + 1) % games.size(); }
-    public void previous() { if (!games.isEmpty()) index = (index + games.size() - 1) % games.size(); }
+    public void next() {
+        int count = visibleGames().size();
+        if (count > 0) index = (index + 1) % count;
+    }
+    public void previous() {
+        int count = visibleGames().size();
+        if (count > 0) index = (index + count - 1) % count;
+    }
     public void setPlatform(Platform platform) {
         this.platform = platform;
         index = 0;

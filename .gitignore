@@ -18,6 +18,7 @@
 .DS_Store
 /.idea/
 /.gradle/
+/android/.gradle/
 /android/local.properties
 /android/gradlew
 /android/app/build/

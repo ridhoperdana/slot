@@ -19,6 +19,7 @@ public class ShelfModelTest {
         ShelfModel shelf = new ShelfModel(Arrays.asList(
                 new ShelfModel.Game("One", ShelfModel.Platform.GB, "one.gb", "Gambatte"),
                 new ShelfModel.Game("Two", ShelfModel.Platform.GB, "two.gb", "Gambatte")));
+        shelf.setPlatform(ShelfModel.Platform.GB);
         shelf.previous();
         assertEquals("Two", shelf.selected().title);
     }
