@@ -20,7 +20,6 @@
 /.gradle/
 /android/.gradle/
 /android/local.properties
-/android/gradlew
 /android/app/build/
 /target-device
 /target-verify
