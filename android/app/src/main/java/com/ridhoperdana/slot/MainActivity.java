@@ -59,9 +59,11 @@ public final class MainActivity extends Activity {
             super(MainActivity.this);
             shelf = ShelfModel.demo();
             background = load(com.ridhoperdana.slot.R.drawable.background_default);
-            gbaCart = load(com.ridhoperdana.slot.R.drawable.gba_cart);
-            gbcCart = load(com.ridhoperdana.slot.R.drawable.gbc_cart);
-            gbCart = load(com.ridhoperdana.slot.R.drawable.gb_cart);
+            // *_cart.png are transparent masks from the original renderer. The
+            // neutral shell bitmaps are the visible cartridge artwork for this port.
+            gbaCart = load(com.ridhoperdana.slot.R.drawable.gba_neutral);
+            gbcCart = load(com.ridhoperdana.slot.R.drawable.gbc_neutral);
+            gbCart = load(com.ridhoperdana.slot.R.drawable.gb_neutral);
             buttonA = load(com.ridhoperdana.slot.R.drawable.button_a);
             buttonB = load(com.ridhoperdana.slot.R.drawable.button_b);
             buttonMenu = load(com.ridhoperdana.slot.R.drawable.button_menu);
@@ -72,13 +74,15 @@ public final class MainActivity extends Activity {
 
         @Override protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
-            float scale = Math.max(getWidth() / 720f, getHeight() / 480f);
+            // Fit the 720x480 artwork inside any viewport. Using max() clipped the
+            // sides on square devices; min() preserves the whole shelf composition.
+            float scale = Math.min(getWidth() / 720f, getHeight() / 480f);
             float ox = (getWidth() - 720f * scale) / 2f;
             float oy = (getHeight() - 480f * scale) / 2f;
+            canvas.drawBitmap(background, null, new Rect(0, 0, getWidth(), getHeight()), paint);
             canvas.save();
             canvas.translate(ox, oy);
             canvas.scale(scale, scale);
-            canvas.drawBitmap(background, null, new Rect(0, 0, 720, 480), paint);
             drawHeader(canvas);
             drawShelf(canvas);
             drawFooter(canvas);
@@ -108,12 +112,22 @@ public final class MainActivity extends Activity {
         }
 
         private void drawFooter(Canvas canvas) {
-            canvas.drawBitmap(buttonA, null, new Rect(36, 432, 68, 464), paint);
-            text(canvas, "ADD ROM FOLDER", 78, 453, 11, Color.WHITE, true);
-            canvas.drawBitmap(buttonB, null, new Rect(278, 432, 310, 464), paint);
-            text(canvas, "CHANGE SYSTEM", 320, 453, 11, Color.WHITE, true);
-            canvas.drawBitmap(buttonMenu, null, new Rect(570, 432, 602, 464), paint);
-            text(canvas, "MENU", 612, 453, 11, Color.WHITE, true);
+            // The RG Pocket Classic is nearly square. Keep all three actions inside
+            // the fitted 720px composition instead of letting the last label touch
+            // the viewport edge on narrow aspect ratios.
+            boolean compact = getWidth() / (float) getHeight() < 1.35f;
+            int aButton = compact ? 20 : 36;
+            int aText = compact ? 58 : 78;
+            int bButton = compact ? 246 : 278;
+            int bText = compact ? 288 : 320;
+            int menuButton = compact ? 500 : 570;
+            int menuText = compact ? 542 : 612;
+            canvas.drawBitmap(buttonA, null, new Rect(aButton, 432, aButton + 32, 464), paint);
+            text(canvas, "ADD ROM FOLDER", aText, 453, compact ? 10 : 11, Color.WHITE, true);
+            canvas.drawBitmap(buttonB, null, new Rect(bButton, 432, bButton + 32, 464), paint);
+            text(canvas, "CHANGE SYSTEM", bText, 453, compact ? 10 : 11, Color.WHITE, true);
+            canvas.drawBitmap(buttonMenu, null, new Rect(menuButton, 432, menuButton + 32, 464), paint);
+            text(canvas, "MENU", menuText, 453, compact ? 10 : 11, Color.WHITE, true);
         }
 
         private void drawMenu(Canvas canvas) {
@@ -147,9 +161,12 @@ public final class MainActivity extends Activity {
                 return true;
             }
             if (Math.abs(delta) > 60) { if (delta < 0) shelf.next(); else shelf.previous(); invalidate(); return true; }
-            if (y > 410 && x > 530) { menu = true; invalidate(); return true; }
-            if (y > 410 && x > 240 && x < 530) { nextPlatform(); invalidate(); return true; }
-            if (y > 410 && x < 235) { chooseFolder(); return true; }
+            boolean compact = getWidth() / (float) getHeight() < 1.35f;
+            float menuStart = compact ? 490 : 550;
+            float systemStart = compact ? 230 : 260;
+            if (y > 410 && x >= menuStart) { menu = true; invalidate(); return true; }
+            if (y > 410 && x > systemStart && x < menuStart) { nextPlatform(); invalidate(); return true; }
+            if (y > 410 && x <= systemStart) { chooseFolder(); return true; }
             if (y > 110 && y < 350 && System.currentTimeMillis() - downAt < 500) launchSelected();
             return true;
         }
