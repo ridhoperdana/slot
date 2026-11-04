@@ -17,6 +17,10 @@
 
 .DS_Store
 /.idea/
+/.gradle/
+/android/local.properties
+/android/gradlew
+/android/app/build/
 /target-device
 /target-verify
 /dist-device
